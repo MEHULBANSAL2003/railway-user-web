@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
-export function useCountdown(initialSeconds = 60) {
+export function useCountdown(initialSeconds) {
   const [seconds, setSeconds] = useState(initialSeconds)
-  const [isActive, setIsActive] = useState(true)
+  const [isActive, setIsActive] = useState(initialSeconds > 0)
+  const durationRef = useRef(initialSeconds)
 
   useEffect(() => {
     if (!isActive || seconds <= 0) return
@@ -20,10 +21,12 @@ export function useCountdown(initialSeconds = 60) {
     return () => clearInterval(interval)
   }, [isActive, seconds])
 
-  const restart = useCallback(() => {
-    setSeconds(initialSeconds)
-    setIsActive(true)
-  }, [initialSeconds])
+  const restart = useCallback((newDuration) => {
+    const dur = newDuration ?? durationRef.current
+    durationRef.current = dur
+    setSeconds(dur)
+    setIsActive(dur > 0)
+  }, [])
 
   return { seconds, isActive, restart }
 }

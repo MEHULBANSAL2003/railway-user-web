@@ -4,9 +4,6 @@ export const STORAGE_KEYS = {
   USER: 'railway_user',
 }
 
-export const OTP_LENGTH = 6
-export const OTP_RESEND_COOLDOWN = 60 // seconds
-
 export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
@@ -14,5 +11,4 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
   DASHBOARD: '/dashboard',
-
 }

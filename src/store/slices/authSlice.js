@@ -2,6 +2,13 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { authService } from '@/services/authService'
 import { storage } from '@/lib/storage'
 
+// --- Helper: store tokens + profile from login/register/refresh response ---
+function persistAuthData(responseData) {
+  storage.setAccessToken(responseData.accessToken)
+  storage.setRefreshToken(responseData.refreshToken)
+  storage.setUser(responseData.profile)
+}
+
 // --- Thunks ---
 
 export const login = createAsyncThunk(
@@ -9,11 +16,8 @@ export const login = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const { data } = await authService.login(credentials)
-      const { accessToken, refreshToken, ...user } = data.data
-      storage.setAccessToken(accessToken)
-      storage.setRefreshToken(refreshToken)
-      storage.setUser(user)
-      return { user, accessToken, refreshToken }
+      persistAuthData(data.data)
+      return data.data // { accessToken, refreshToken, tokenType, expiresIn, profile, reactivated }
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.reason || 'Login failed. Please try again.'
@@ -27,7 +31,7 @@ export const registerInitiate = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const { data } = await authService.registerInitiate(userData)
-      return data.data
+      return data.data // { message, expiresInSeconds, otpLength, resendCooldownSeconds, resendsRemaining }
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.reason || 'Registration failed. Please try again.'
@@ -41,11 +45,8 @@ export const registerVerifyOtp = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await authService.registerVerifyOtp(payload)
-      const { accessToken, refreshToken, ...user } = data.data
-      storage.setAccessToken(accessToken)
-      storage.setRefreshToken(refreshToken)
-      storage.setUser(user)
-      return { user, accessToken, refreshToken }
+      persistAuthData(data.data)
+      return data.data // { accessToken, refreshToken, tokenType, expiresIn, profile, reactivated }
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.reason || 'OTP verification failed.'
@@ -59,7 +60,7 @@ export const registerResendOtp = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await authService.registerResendOtp(payload)
-      return data.data
+      return data.data // { message, expiresInSeconds, otpLength, resendCooldownSeconds, resendsRemaining }
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.reason || 'Failed to resend OTP.'
@@ -68,26 +69,26 @@ export const registerResendOtp = createAsyncThunk(
   }
 )
 
-export const forgotPassword = createAsyncThunk(
-  'auth/forgotPassword',
+export const resetPasswordInitiate = createAsyncThunk(
+  'auth/resetPasswordInitiate',
   async (payload, { rejectWithValue }) => {
     try {
-      const { data } = await authService.forgotPassword(payload)
-      return data.data
+      const { data } = await authService.resetPasswordInitiate(payload)
+      return data.data // { message, expiresInSeconds, otpLength, resendCooldownSeconds, resendsRemaining }
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.reason || 'Failed to send reset email.'
+        error.response?.data?.reason || 'Failed to send reset OTP.'
       )
     }
   }
 )
 
-export const resetPassword = createAsyncThunk(
-  'auth/resetPassword',
+export const resetPasswordVerify = createAsyncThunk(
+  'auth/resetPasswordVerify',
   async (payload, { rejectWithValue }) => {
     try {
-      const { data } = await authService.resetPassword(payload)
-      return data.data
+      const { data } = await authService.resetPasswordVerify(payload)
+      return data.data // null on success
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.reason || 'Password reset failed.'
@@ -96,12 +97,12 @@ export const resetPassword = createAsyncThunk(
   }
 )
 
-export const resendResetOtp = createAsyncThunk(
-  'auth/resendResetOtp',
+export const resetPasswordResend = createAsyncThunk(
+  'auth/resetPasswordResend',
   async (payload, { rejectWithValue }) => {
     try {
-      const { data } = await authService.resendResetOtp(payload)
-      return data.data
+      const { data } = await authService.resetPasswordResend(payload)
+      return data.data // { message, expiresInSeconds, otpLength, resendCooldownSeconds, resendsRemaining }
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.reason || 'Failed to resend OTP.'
@@ -114,7 +115,10 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      await authService.logout()
+      const refreshToken = storage.getRefreshToken()
+      if (refreshToken) {
+        await authService.logout(refreshToken)
+      }
     } catch {
       // Logout from client even if API fails
     } finally {
@@ -131,9 +135,8 @@ const initialState = {
   isAuthenticated: !!storage.getAccessToken(),
   loading: false,
   error: null,
-  // OTP flow state
-  otpEmail: null,
-  otpContext: null, // 'register' | 'resetPassword'
+  // OTP flow state — driven entirely by backend response
+  otpFlow: null, // { phone, identifier, context, message, otpLength, expiresInSeconds, resendCooldownSeconds, resendsRemaining }
 }
 
 const authSlice = createSlice({
@@ -144,19 +147,16 @@ const authSlice = createSlice({
       state.error = null
     },
     setOtpFlow: (state, action) => {
-      state.otpEmail = action.payload.email
-      state.otpContext = action.payload.context
+      state.otpFlow = action.payload
     },
     clearOtpFlow: (state) => {
-      state.otpEmail = null
-      state.otpContext = null
+      state.otpFlow = null
     },
     forceLogout: (state) => {
       state.user = null
       state.accessToken = null
       state.isAuthenticated = false
-      state.otpEmail = null
-      state.otpContext = null
+      state.otpFlow = null
     },
   },
   extraReducers: (builder) => {
@@ -168,7 +168,7 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false
-        state.user = action.payload.user
+        state.user = action.payload.profile
         state.accessToken = action.payload.accessToken
         state.isAuthenticated = true
       })
@@ -177,21 +177,22 @@ const authSlice = createSlice({
         state.error = action.payload
       })
 
-    // Register Initiate
+    // Register Initiate — store OTP flow data from backend
     builder
       .addCase(registerInitiate.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(registerInitiate.fulfilled, (state) => {
+      .addCase(registerInitiate.fulfilled, (state, action) => {
         state.loading = false
+        // otpFlow gets phone set by the component via the thunk arg; backend gives us the rest
       })
       .addCase(registerInitiate.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
 
-    // Register Verify OTP
+    // Register Verify OTP — auto-login on success
     builder
       .addCase(registerVerifyOtp.pending, (state) => {
         state.loading = true
@@ -199,69 +200,83 @@ const authSlice = createSlice({
       })
       .addCase(registerVerifyOtp.fulfilled, (state, action) => {
         state.loading = false
-        state.user = action.payload.user
+        state.user = action.payload.profile
         state.accessToken = action.payload.accessToken
         state.isAuthenticated = true
-        state.otpEmail = null
-        state.otpContext = null
+        state.otpFlow = null
       })
       .addCase(registerVerifyOtp.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
 
-    // Register Resend OTP
+    // Register Resend OTP — update OTP config from backend
     builder
       .addCase(registerResendOtp.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(registerResendOtp.fulfilled, (state) => {
+      .addCase(registerResendOtp.fulfilled, (state, action) => {
         state.loading = false
+        if (state.otpFlow) {
+          state.otpFlow.resendsRemaining = action.payload.resendsRemaining
+          state.otpFlow.resendCooldownSeconds = action.payload.resendCooldownSeconds
+          state.otpFlow.expiresInSeconds = action.payload.expiresInSeconds
+          state.otpFlow.otpLength = action.payload.otpLength
+          state.otpFlow.message = action.payload.message
+        }
       })
       .addCase(registerResendOtp.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
 
-    // Forgot Password
+    // Reset Password Initiate
     builder
-      .addCase(forgotPassword.pending, (state) => {
+      .addCase(resetPasswordInitiate.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(forgotPassword.fulfilled, (state) => {
+      .addCase(resetPasswordInitiate.fulfilled, (state) => {
         state.loading = false
       })
-      .addCase(forgotPassword.rejected, (state, action) => {
+      .addCase(resetPasswordInitiate.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
 
-    // Reset Password
+    // Reset Password Verify
     builder
-      .addCase(resetPassword.pending, (state) => {
+      .addCase(resetPasswordVerify.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(resetPassword.fulfilled, (state) => {
+      .addCase(resetPasswordVerify.fulfilled, (state) => {
         state.loading = false
+        state.otpFlow = null
       })
-      .addCase(resetPassword.rejected, (state, action) => {
+      .addCase(resetPasswordVerify.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
 
-    // Resend Reset OTP
+    // Reset Password Resend — update OTP config from backend
     builder
-      .addCase(resendResetOtp.pending, (state) => {
+      .addCase(resetPasswordResend.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(resendResetOtp.fulfilled, (state) => {
+      .addCase(resetPasswordResend.fulfilled, (state, action) => {
         state.loading = false
+        if (state.otpFlow) {
+          state.otpFlow.resendsRemaining = action.payload.resendsRemaining
+          state.otpFlow.resendCooldownSeconds = action.payload.resendCooldownSeconds
+          state.otpFlow.expiresInSeconds = action.payload.expiresInSeconds
+          state.otpFlow.otpLength = action.payload.otpLength
+          state.otpFlow.message = action.payload.message
+        }
       })
-      .addCase(resendResetOtp.rejected, (state, action) => {
+      .addCase(resetPasswordResend.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
@@ -272,8 +287,7 @@ const authSlice = createSlice({
         state.user = null
         state.accessToken = null
         state.isAuthenticated = false
-        state.otpEmail = null
-        state.otpContext = null
+        state.otpFlow = null
       })
   },
 })

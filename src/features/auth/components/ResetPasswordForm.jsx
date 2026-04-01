@@ -7,11 +7,11 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { resetPasswordSchema } from '@/constants/validationRules'
 import {
-  resetPassword,
-  resendResetOtp,
+  resetPasswordVerify,
+  resetPasswordResend,
   clearError,
 } from '@/store/slices/authSlice'
-import { ROUTES, OTP_RESEND_COOLDOWN } from '@/constants/appConstants'
+import { ROUTES } from '@/constants/appConstants'
 import { useCountdown } from '@/features/auth/hooks/useCountdown'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -21,9 +21,11 @@ import OtpInput from '@/components/OtpInput'
 export default function ResetPasswordForm() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { loading, otpEmail } = useSelector((state) => state.auth)
-  const { seconds, isActive, restart } = useCountdown(OTP_RESEND_COOLDOWN)
+  const { loading, otpFlow } = useSelector((state) => state.auth)
+  const { seconds, isActive, restart } = useCountdown(otpFlow?.resendCooldownSeconds ?? 0)
   const [otpValue, setOtpValue] = useState('')
+
+  const otpLength = otpFlow?.otpLength ?? 6
 
   const {
     register,
@@ -43,13 +45,13 @@ export default function ResetPasswordForm() {
   const onSubmit = async (data) => {
     dispatch(clearError())
     const result = await dispatch(
-      resetPassword({
-        email: otpEmail,
+      resetPasswordVerify({
+        identifier: otpFlow.identifier,
         otp: data.otp,
         newPassword: data.newPassword,
       })
     )
-    if (resetPassword.fulfilled.match(result)) {
+    if (resetPasswordVerify.fulfilled.match(result)) {
       toast.success('Password reset successful! Please login.')
       navigate(ROUTES.LOGIN, { replace: true })
     } else {
@@ -59,10 +61,10 @@ export default function ResetPasswordForm() {
 
   const handleResend = async () => {
     dispatch(clearError())
-    const result = await dispatch(resendResetOtp({ email: otpEmail }))
-    if (resendResetOtp.fulfilled.match(result)) {
-      toast.success('New OTP sent to your email')
-      restart()
+    const result = await dispatch(resetPasswordResend({ identifier: otpFlow.identifier }))
+    if (resetPasswordResend.fulfilled.match(result)) {
+      toast.success(result.payload.message || 'OTP resent')
+      restart(result.payload.resendCooldownSeconds)
       setOtpValue('')
       setValue('otp', '')
     } else {
@@ -70,18 +72,17 @@ export default function ResetPasswordForm() {
     }
   }
 
+  const resendsRemaining = otpFlow?.resendsRemaining ?? 0
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2 text-center">
-        <p className="text-sm text-gray-500">
-          Enter the OTP sent to
-        </p>
-        <p className="font-medium text-gray-900">{otpEmail}</p>
+        <p className="text-sm text-gray-500">{otpFlow?.message}</p>
       </div>
 
       <div className="space-y-2">
         <Label>Verification Code</Label>
-        <OtpInput value={otpValue} onChange={handleOtpChange} disabled={loading} />
+        <OtpInput length={otpLength} value={otpValue} onChange={handleOtpChange} disabled={loading} />
         <input type="hidden" {...register('otp')} />
         {errors.otp && (
           <p className="text-center text-sm text-red-500">{errors.otp.message}</p>
@@ -120,9 +121,12 @@ export default function ResetPasswordForm() {
       </Button>
 
       <div className="text-center">
-        {isActive ? (
+        {resendsRemaining <= 0 ? (
+          <p className="text-sm text-gray-500">No resends remaining</p>
+        ) : isActive ? (
           <p className="text-sm text-gray-500">
             Resend OTP in <span className="font-medium text-primary">{seconds}s</span>
+            {' '}<span className="text-gray-400">({resendsRemaining} left)</span>
           </p>
         ) : (
           <button
@@ -131,7 +135,7 @@ export default function ResetPasswordForm() {
             disabled={loading}
             className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
           >
-            Resend OTP
+            Resend OTP ({resendsRemaining} left)
           </button>
         )}
       </div>

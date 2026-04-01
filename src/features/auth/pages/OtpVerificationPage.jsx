@@ -13,19 +13,19 @@ import {
 import OtpVerificationForm from '../components/OtpVerificationForm'
 
 export default function OtpVerificationPage() {
-  const { otpEmail, otpContext } = useSelector((state) => state.auth)
+  const { otpFlow } = useSelector((state) => state.auth)
 
-  // Guard: redirect if no OTP flow in progress
-  if (!otpEmail || otpContext !== 'register') {
+  // Guard: redirect if no register OTP flow in progress
+  if (!otpFlow || otpFlow.context !== 'register') {
     return <Navigate to={ROUTES.REGISTER} replace />
   }
 
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle>Verify Your Email</CardTitle>
+        <CardTitle>Verify Your Phone</CardTitle>
         <CardDescription>
-          Enter the 6-digit code we sent to your email
+          Enter the {otpFlow.otpLength}-digit code sent to your phone
         </CardDescription>
       </CardHeader>
       <CardContent>

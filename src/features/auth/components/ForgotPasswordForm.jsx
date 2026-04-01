@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { forgotPasswordSchema } from '@/constants/validationRules'
-import { forgotPassword, setOtpFlow, clearError } from '@/store/slices/authSlice'
+import { resetPasswordInitiate, setOtpFlow, clearError } from '@/store/slices/authSlice'
 import { ROUTES } from '@/constants/appConstants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,34 +22,42 @@ export default function ForgotPasswordForm() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: '' },
+    defaultValues: { identifier: '' },
   })
 
   const onSubmit = async (data) => {
     dispatch(clearError())
-    const result = await dispatch(forgotPassword(data))
-    if (forgotPassword.fulfilled.match(result)) {
-      dispatch(setOtpFlow({ email: data.email, context: 'resetPassword' }))
-      toast.success('Reset OTP sent to your email')
+    const result = await dispatch(resetPasswordInitiate(data))
+    if (resetPasswordInitiate.fulfilled.match(result)) {
+      const otpData = result.payload
+      dispatch(setOtpFlow({
+        identifier: data.identifier,
+        context: 'resetPassword',
+        message: otpData.message,
+        otpLength: otpData.otpLength,
+        expiresInSeconds: otpData.expiresInSeconds,
+        resendCooldownSeconds: otpData.resendCooldownSeconds,
+        resendsRemaining: otpData.resendsRemaining,
+      }))
+      toast.success(otpData.message)
       navigate(ROUTES.RESET_PASSWORD)
     } else {
-      toast.error(result.payload || 'Failed to send reset email')
+      toast.error(result.payload || 'Failed to send reset OTP')
     }
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
+        <Label htmlFor="identifier">Email, Phone, or Username</Label>
         <Input
-          id="email"
-          type="email"
-          placeholder="you@example.com"
-          autoComplete="email"
-          {...register('email')}
+          id="identifier"
+          placeholder="you@example.com / 9876543210 / username"
+          autoComplete="username"
+          {...register('identifier')}
         />
-        {errors.email && (
-          <p className="text-sm text-red-500">{errors.email.message}</p>
+        {errors.identifier && (
+          <p className="text-sm text-red-500">{errors.identifier.message}</p>
         )}
       </div>
 

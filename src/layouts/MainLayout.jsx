@@ -26,7 +26,7 @@ export default function MainLayout() {
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">
-                {user?.firstName} {user?.lastName}
+                {user?.fullName}
               </span>
             </div>
             <Button variant="ghost" size="sm" onClick={handleLogout}>

@@ -6,12 +6,17 @@ export const AUTH_ENDPOINTS = {
   REGISTER_VERIFY_OTP: '/auth/user/register/otp/verify',
   REGISTER_RESEND_OTP: '/auth/user/register/otp/resend',
   REFRESH_TOKEN: '/auth/user/refresh',
-  FORGOT_PASSWORD: '/auth/user/reset-password/initiate',
-  RESET_PASSWORD: '/auth/user/reset-password/verify',
-  RESEND_RESET_OTP: '/auth/user/reset-password/resend',
+  RESET_PASSWORD_INITIATE: '/auth/user/reset-password/initiate',
+  RESET_PASSWORD_VERIFY: '/auth/user/reset-password/verify',
+  RESET_PASSWORD_RESEND: '/auth/user/reset-password/resend',
 }
 
 export const USER_ENDPOINTS = {
-  LOGOUT: '/users/logout',
   GET_PROFILE: '/users/me',
+  LOGOUT: '/users/logout',
+  CHANGE_PASSWORD: '/users/change-password',
+  EMAIL_SEND_OTP: '/users/email/send-otp',
+  EMAIL_VERIFY_OTP: '/users/email/verify-otp',
+  EMAIL_RESEND_OTP: '/users/email/resend-otp',
+  DEACTIVATE: '/users/deactivate',
 }

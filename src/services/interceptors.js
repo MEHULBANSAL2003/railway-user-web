@@ -48,17 +48,16 @@ export function setupInterceptors(store) {
           refreshToken,
         })
 
-        const newAccessToken = data.data.accessToken
-        const newRefreshToken = data.data.refreshToken
-
-        storage.setAccessToken(newAccessToken)
-        if (newRefreshToken) {
-          storage.setRefreshToken(newRefreshToken)
+        const responseData = data.data
+        storage.setAccessToken(responseData.accessToken)
+        storage.setRefreshToken(responseData.refreshToken)
+        if (responseData.profile) {
+          storage.setUser(responseData.profile)
         }
 
-        processQueue(null, newAccessToken)
+        processQueue(null, responseData.accessToken)
 
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+        originalRequest.headers.Authorization = `Bearer ${responseData.accessToken}`
         return authClient(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError, null)

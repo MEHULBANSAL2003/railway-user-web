@@ -24,8 +24,8 @@ export default function RegisterForm() {
   } = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      username: '',
+      fullName: '',
       email: '',
       phone: '',
       password: '',
@@ -38,8 +38,17 @@ export default function RegisterForm() {
     const { confirmPassword, ...payload } = formData
     const result = await dispatch(registerInitiate(payload))
     if (registerInitiate.fulfilled.match(result)) {
-      dispatch(setOtpFlow({ email: formData.email, context: 'register' }))
-      toast.success('OTP sent to your email')
+      const otpData = result.payload
+      dispatch(setOtpFlow({
+        phone: formData.phone,
+        context: 'register',
+        message: otpData.message,
+        otpLength: otpData.otpLength,
+        expiresInSeconds: otpData.expiresInSeconds,
+        resendCooldownSeconds: otpData.resendCooldownSeconds,
+        resendsRemaining: otpData.resendsRemaining,
+      }))
+      toast.success(otpData.message)
       navigate(ROUTES.VERIFY_OTP)
     } else {
       toast.error(result.payload || 'Registration failed')
@@ -48,32 +57,30 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="firstName">First Name</Label>
-          <Input
-            id="firstName"
-            placeholder="John"
-            autoComplete="given-name"
-            {...register('firstName')}
-          />
-          {errors.firstName && (
-            <p className="text-sm text-red-500">{errors.firstName.message}</p>
-          )}
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="username">Username</Label>
+        <Input
+          id="username"
+          placeholder="mehul_123"
+          autoComplete="username"
+          {...register('username')}
+        />
+        {errors.username && (
+          <p className="text-sm text-red-500">{errors.username.message}</p>
+        )}
+      </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="lastName">Last Name</Label>
-          <Input
-            id="lastName"
-            placeholder="Doe"
-            autoComplete="family-name"
-            {...register('lastName')}
-          />
-          {errors.lastName && (
-            <p className="text-sm text-red-500">{errors.lastName.message}</p>
-          )}
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="fullName">Full Name</Label>
+        <Input
+          id="fullName"
+          placeholder="Mehul Sharma"
+          autoComplete="name"
+          {...register('fullName')}
+        />
+        {errors.fullName && (
+          <p className="text-sm text-red-500">{errors.fullName.message}</p>
+        )}
       </div>
 
       <div className="space-y-2">

@@ -1,26 +1,26 @@
 import { z } from 'zod/v4'
 
 export const loginSchema = z.object({
-  email: z
+  identifier: z
     .string()
-    .min(1, 'Email is required')
-    .email('Please enter a valid email'),
+    .min(1, 'Email, phone, or username is required')
+    .max(255),
   password: z
     .string()
     .min(1, 'Password is required'),
 })
 
 export const registerSchema = z.object({
-  firstName: z
+  username: z
     .string()
-    .min(1, 'First name is required')
-    .min(2, 'First name must be at least 2 characters')
-    .max(50, 'First name must be less than 50 characters'),
-  lastName: z
+    .min(1, 'Username is required')
+    .min(3, 'Username must be at least 3 characters')
+    .max(30, 'Username must be at most 30 characters')
+    .regex(/^[a-zA-Z][a-zA-Z0-9_]{2,29}$/, 'Must start with a letter. Only letters, numbers, and underscores allowed.'),
+  fullName: z
     .string()
-    .min(1, 'Last name is required')
-    .min(2, 'Last name must be at least 2 characters')
-    .max(50, 'Last name must be less than 50 characters'),
+    .min(1, 'Full name is required')
+    .max(200, 'Full name must be at most 200 characters'),
   email: z
     .string()
     .min(1, 'Email is required')
@@ -28,15 +28,16 @@ export const registerSchema = z.object({
   phone: z
     .string()
     .min(1, 'Phone number is required')
-    .regex(/^[6-9]\d{9}$/, 'Please enter a valid 10-digit Indian phone number'),
+    .regex(/^\d{10}$/, 'Please enter a valid 10-digit phone number'),
   password: z
     .string()
     .min(1, 'Password is required')
     .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+    .max(64, 'Password must be at most 64 characters')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Must contain at least one digit')
+    .regex(/[@#$%^&+=!?_-]/, 'Must contain at least one special character (@#$%^&+=!?_-)'),
   confirmPassword: z
     .string()
     .min(1, 'Confirm password is required'),
@@ -45,33 +46,26 @@ export const registerSchema = z.object({
   path: ['confirmPassword'],
 })
 
-export const otpSchema = z.object({
-  otp: z
-    .string()
-    .length(6, 'OTP must be 6 digits')
-    .regex(/^\d{6}$/, 'OTP must contain only numbers'),
-})
-
 export const forgotPasswordSchema = z.object({
-  email: z
+  identifier: z
     .string()
-    .min(1, 'Email is required')
-    .email('Please enter a valid email'),
+    .min(1, 'Email, phone, or username is required')
+    .max(255),
 })
 
 export const resetPasswordSchema = z.object({
   otp: z
     .string()
-    .length(6, 'OTP must be 6 digits')
-    .regex(/^\d{6}$/, 'OTP must contain only numbers'),
+    .regex(/^\d{6}$/, 'OTP must be 6 digits'),
   newPassword: z
     .string()
     .min(1, 'Password is required')
     .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+    .max(64, 'Password must be at most 64 characters')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Must contain at least one digit')
+    .regex(/[@#$%^&+=!?_-]/, 'Must contain at least one special character (@#$%^&+=!?_-)'),
   confirmPassword: z
     .string()
     .min(1, 'Confirm password is required'),

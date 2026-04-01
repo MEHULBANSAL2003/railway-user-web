@@ -13,10 +13,10 @@ import {
 import ResetPasswordForm from '../components/ResetPasswordForm'
 
 export default function ResetPasswordPage() {
-  const { otpEmail, otpContext } = useSelector((state) => state.auth)
+  const { otpFlow } = useSelector((state) => state.auth)
 
   // Guard: redirect if no reset flow in progress
-  if (!otpEmail || otpContext !== 'resetPassword') {
+  if (!otpFlow || otpFlow.context !== 'resetPassword') {
     return <Navigate to={ROUTES.FORGOT_PASSWORD} replace />
   }
 

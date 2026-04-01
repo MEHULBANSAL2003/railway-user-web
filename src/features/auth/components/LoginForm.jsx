@@ -26,14 +26,17 @@ export default function LoginForm() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { identifier: '', password: '' },
   })
 
   const onSubmit = async (data) => {
     dispatch(clearError())
     const result = await dispatch(login(data))
     if (login.fulfilled.match(result)) {
-      toast.success('Welcome back!')
+      const msg = result.payload.reactivated
+        ? 'Welcome back! Your account has been reactivated.'
+        : 'Welcome back!'
+      toast.success(msg)
       navigate(from, { replace: true })
     } else {
       toast.error(result.payload || 'Login failed')
@@ -43,16 +46,15 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="identifier">Email, Phone, or Username</Label>
         <Input
-          id="email"
-          type="email"
-          placeholder="you@example.com"
-          autoComplete="email"
-          {...register('email')}
+          id="identifier"
+          placeholder="you@example.com / 9876543210 / username"
+          autoComplete="username"
+          {...register('identifier')}
         />
-        {errors.email && (
-          <p className="text-sm text-red-500">{errors.email.message}</p>
+        {errors.identifier && (
+          <p className="text-sm text-red-500">{errors.identifier.message}</p>
         )}
       </div>
 
