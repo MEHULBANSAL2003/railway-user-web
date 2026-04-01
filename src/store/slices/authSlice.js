@@ -111,6 +111,92 @@ export const resetPasswordResend = createAsyncThunk(
   }
 )
 
+export const fetchProfile = createAsyncThunk(
+  'auth/fetchProfile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await authService.getProfile()
+      storage.setUser(data.data)
+      return data.data // UserProfileResponse
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.reason || 'Failed to fetch profile.'
+      )
+    }
+  }
+)
+
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const { data } = await authService.changePassword(payload)
+      return data.data // null on success
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.reason || 'Failed to change password.'
+      )
+    }
+  }
+)
+
+export const emailSendOtp = createAsyncThunk(
+  'auth/emailSendOtp',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await authService.emailSendOtp()
+      return data.data // { message, expiresInSeconds, otpLength, resendCooldownSeconds, resendsRemaining }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.reason || 'Failed to send verification OTP.'
+      )
+    }
+  }
+)
+
+export const emailVerifyOtp = createAsyncThunk(
+  'auth/emailVerifyOtp',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const { data } = await authService.emailVerifyOtp(payload)
+      return data.data // null on success
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.reason || 'OTP verification failed.'
+      )
+    }
+  }
+)
+
+export const emailResendOtp = createAsyncThunk(
+  'auth/emailResendOtp',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await authService.emailResendOtp()
+      return data.data // { message, expiresInSeconds, otpLength, resendCooldownSeconds, resendsRemaining }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.reason || 'Failed to resend OTP.'
+      )
+    }
+  }
+)
+
+export const deactivateAccount = createAsyncThunk(
+  'auth/deactivateAccount',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const { data } = await authService.deactivate(payload)
+      storage.clearAuth()
+      return data.data // null on success
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.reason || 'Failed to deactivate account.'
+      )
+    }
+  }
+)
+
 export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
@@ -157,6 +243,12 @@ const authSlice = createSlice({
       state.accessToken = null
       state.isAuthenticated = false
       state.otpFlow = null
+    },
+    updateEmailVerified: (state) => {
+      if (state.user) {
+        state.user.emailVerified = true
+        storage.setUser(state.user)
+      }
     },
   },
   extraReducers: (builder) => {
@@ -281,6 +373,21 @@ const authSlice = createSlice({
         state.error = action.payload
       })
 
+    // Fetch Profile
+    builder
+      .addCase(fetchProfile.fulfilled, (state, action) => {
+        state.user = action.payload
+      })
+
+    // Deactivate Account
+    builder
+      .addCase(deactivateAccount.fulfilled, (state) => {
+        state.user = null
+        state.accessToken = null
+        state.isAuthenticated = false
+        state.otpFlow = null
+      })
+
     // Logout
     builder
       .addCase(logout.fulfilled, (state) => {
@@ -292,5 +399,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { clearError, setOtpFlow, clearOtpFlow, forceLogout } = authSlice.actions
+export const { clearError, setOtpFlow, clearOtpFlow, forceLogout, updateEmailVerified } = authSlice.actions
 export default authSlice.reducer

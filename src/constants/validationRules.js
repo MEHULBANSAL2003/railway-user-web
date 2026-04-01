@@ -73,3 +73,24 @@ export const resetPasswordSchema = z.object({
   message: 'Passwords do not match',
   path: ['confirmPassword'],
 })
+
+export const changePasswordSchema = z.object({
+  currentPassword: z
+    .string()
+    .min(1, 'Current password is required'),
+  newPassword: z
+    .string()
+    .min(1, 'New password is required')
+    .min(8, 'Password must be at least 8 characters')
+    .max(64, 'Password must be at most 64 characters')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Must contain at least one digit')
+    .regex(/[@#$%^&+=!?_-]/, 'Must contain at least one special character (@#$%^&+=!?_-)'),
+  confirmPassword: z
+    .string()
+    .min(1, 'Confirm password is required'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+})

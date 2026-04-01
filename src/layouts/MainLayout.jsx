@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate, Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { LogOut, User } from 'lucide-react'
 import { logout } from '@/store/slices/authSlice'
@@ -23,12 +23,15 @@ export default function MainLayout() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Logo />
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Link
+              to={ROUTES.PROFILE}
+              className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            >
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">
                 {user?.fullName}
               </span>
-            </div>
+            </Link>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Logout</span>

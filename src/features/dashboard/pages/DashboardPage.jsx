@@ -1,9 +1,12 @@
 import { useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Train, Search, Ticket, User } from 'lucide-react'
+import { ROUTES } from '@/constants/appConstants'
 
 export default function DashboardPage() {
   const { user } = useSelector((state) => state.auth)
+  const navigate = useNavigate()
 
   return (
     <div className="space-y-6">
@@ -19,9 +22,13 @@ export default function DashboardPage() {
           { icon: Search, title: 'Search Trains', desc: 'Find trains between stations' },
           { icon: Ticket, title: 'My Bookings', desc: 'View your ticket history' },
           { icon: Train, title: 'Live Status', desc: 'Check train running status' },
-          { icon: User, title: 'My Profile', desc: 'Manage your account' },
-        ].map(({ icon: Icon, title, desc }) => (
-          <Card key={title} className="cursor-pointer transition-shadow hover:shadow-md">
+          { icon: User, title: 'My Profile', desc: 'Manage your account', route: ROUTES.PROFILE },
+        ].map(({ icon: Icon, title, desc, route }) => (
+          <Card
+            key={title}
+            className="cursor-pointer transition-shadow hover:shadow-md"
+            onClick={() => route && navigate(route)}
+          >
             <CardHeader>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50">
                 <Icon className="h-5 w-5 text-primary" />

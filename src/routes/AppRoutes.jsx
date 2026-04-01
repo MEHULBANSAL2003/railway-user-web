@@ -11,6 +11,7 @@ const OtpVerificationPage = lazy(() => import('@/features/auth/pages/OtpVerifica
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPasswordPage'))
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'))
+const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'))
 const NotFoundPage = lazy(() => import('@/components/NotFoundPage'))
 
 export default function AppRoutes() {
@@ -28,6 +29,7 @@ export default function AppRoutes() {
       {/* Protected routes */}
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
       {/* Redirects & fallback */}
