@@ -1,9 +1,14 @@
-function App() {
+import { Suspense } from 'react'
+import { useAuthInit } from '@/hooks/useAuthInit'
+import AppRoutes from '@/routes/AppRoutes'
+import LoadingSpinner from '@/components/LoadingSpinner'
+
+export default function App() {
+  useAuthInit()
+
   return (
-    <div>
-      <h1>Railway Ticket Booking</h1>
-    </div>
+    <Suspense fallback={<LoadingSpinner />}>
+      <AppRoutes />
+    </Suspense>
   )
 }
-
-export default App

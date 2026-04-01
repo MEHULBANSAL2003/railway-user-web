@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #14967a;
+  --color-primary-light: #1ab394;
+  --color-primary-dark: #0f7a63;
+  --color-primary-50: #edfaf6;
+  --color-primary-100: #d2f2e9;
+  --color-primary-200: #a8e5d5;
+  --color-primary-300: #71d2bb;
+  --color-primary-400: #3dba9d;
+  --color-primary-500: #14967a;
+  --color-primary-600: #0f7a63;
+  --color-primary-700: #0d6251;
+  --color-primary-800: #0b4e40;
+  --color-primary-900: #083d33;
+
+  --color-accent: #f59e0b;
+  --color-accent-light: #fbbf24;
+  --color-accent-dark: #d97706;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Focus ring utility for accessibility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2;
+}
