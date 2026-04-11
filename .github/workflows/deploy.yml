@@ -54,9 +54,9 @@ jobs:
       - name: Build
         run: |
           if [ "${{ inputs.environment }}" = "prod" ]; then
-            npm run build -- --mode production
+            npm run build:prod
           else
-            npm run build -- --mode development
+            npm run build:dev
           fi
 
       # Step 5: Configure AWS credentials
