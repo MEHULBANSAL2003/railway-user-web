@@ -19,14 +19,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # WHY environment here?
-    # This tells GitHub Actions to use secrets from the selected
-    # environment (dev or prod). All secrets defined in that
-    # environment are automatically available in this job.
-    # So if you add 50 secrets to 'prod' environment, they all
-    # just work — no changes needed in this workflow file.
-    environment: ${{ inputs.environment }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,19 +34,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # WHY create .env file here?
-      # .env files are in .gitignore so they don't exist on the runner.
-      # We create them on the fly using secrets from the selected environment.
-      # ${{ secrets.VITE_API_BASE_URL }} automatically comes from
-      # whichever environment (dev/prod) was selected above.
       - name: Create env file
         run: |
           if [ "${{ inputs.environment }}" = "prod" ]; then
             echo "VITE_APP_ENV=production" > .env.production
-            echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" >> .env.production
+            echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL_PROD }}" >> .env.production
           else
             echo "VITE_APP_ENV=development" > .env.development
-            echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" >> .env.development
+            echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL_DEV }}" >> .env.development
           fi
 
       - name: Build
@@ -73,19 +60,24 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Upload to S3
-        run: aws s3 sync ./dist s3://${{ secrets.S3_BUCKET }} --delete
-        # WHY single secret S3_BUCKET?
-        # Each environment has its own S3_BUCKET secret value.
-        # dev environment → S3_BUCKET = railtick-user-dev
-        # prod environment → S3_BUCKET = railtick-user-prod
-        # No if/else needed — the environment handles it!
+        run: |
+          if [ "${{ inputs.environment }}" = "prod" ]; then
+            aws s3 sync ./dist s3://${{ secrets.S3_BUCKET_PROD }} --delete
+          else
+            aws s3 sync ./dist s3://${{ secrets.S3_BUCKET_DEV }} --delete
+          fi
 
       - name: Invalidate CloudFront cache
         run: |
-          aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*"
-        # Same idea — each environment has its own CLOUDFRONT_DISTRIBUTION_ID
+          if [ "${{ inputs.environment }}" = "prod" ]; then
+            aws cloudfront create-invalidation \
+              --distribution-id ${{ secrets.CLOUDFRONT_PROD }} \
+              --paths "/*"
+          else
+            aws cloudfront create-invalidation \
+              --distribution-id ${{ secrets.CLOUDFRONT_DEV }} \
+              --paths "/*"
+          fi
 
       - name: Done
         run: |
