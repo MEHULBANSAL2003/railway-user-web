@@ -35,6 +35,7 @@ pipeline {
         stage('Inject Env File') {
             steps {
                 script {
+                    def secretsPath = '/home/ubuntu/railtick-frontend-secrets/user-web'
                     if (params.ENVIRONMENT == 'prod') {
                         sh "cp ${ENV_SECRETS_PATH}/.env.production .env.production"
                     } else {
