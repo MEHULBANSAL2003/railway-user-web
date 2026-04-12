@@ -12,7 +12,7 @@ pipeline {
             defaultValue: 'main',
             description: 'Branch to deploy from'
         )
-    )
+    }
 
     environment {
         DEV_S3_BUCKET   = 'railtick-user-dev'
@@ -20,7 +20,6 @@ pipeline {
         DEV_CF_DIST_ID  = 'ERKD8AQR15P18'
         PROD_CF_DIST_ID = 'E26U3FKRS5X9JA'
         AWS_REGION      = 'ap-south-1'
-        ENV_SECRETS_PATH = '/home/ubuntu/railtick-frontend-secrets/user-web'
     }
 
     stages {
