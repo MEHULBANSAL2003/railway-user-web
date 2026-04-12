@@ -15,16 +15,11 @@ pipeline {
     }
 
     environment {
-        // User web buckets — change these for admin-web Jenkinsfile
-        DEV_S3_BUCKET      = 'railtick-user-dev'
-        PROD_S3_BUCKET     = 'railtick-user-prod'
-
-        // CloudFront distribution IDs
-        DEV_CF_DIST_ID     = 'ERKD8AQR15P18'
-        PROD_CF_DIST_ID    = 'E26U3FKRS5X9JA'
-
-        // AWS region where your S3 buckets are
-        AWS_REGION         = 'ap-south-1'
+        DEV_S3_BUCKET   = 'railtick-user-dev'
+        PROD_S3_BUCKET  = 'railtick-user-prod'
+        DEV_CF_DIST_ID  = 'ERKD8AQR15P18'
+        PROD_CF_DIST_ID = 'E26U3FKRS5X9JA'
+        AWS_REGION      = 'ap-south-1'
     }
 
     stages {
@@ -49,11 +44,9 @@ pipeline {
             steps {
                 script {
                     if (params.ENVIRONMENT == 'prod') {
-                        // Uses .env.production
-                        sh 'npm run build'
+                        sh 'npm run build:prod'
                     } else {
-                        // Uses .env.development
-                        sh 'npm run build -- --mode development'
+                        sh 'npm run build:dev'
                     }
                 }
             }
@@ -67,14 +60,14 @@ pipeline {
                         : env.DEV_S3_BUCKET
 
                     sh """
-                        aws s3 sync build/ s3://${bucket}/ \
+                        aws s3 sync dist/ s3://${bucket}/ \
                             --region ${AWS_REGION} \
                             --delete \
                             --cache-control "public, max-age=31536000" \
                             --exclude "index.html" \
                             --exclude "*.json"
 
-                        aws s3 cp build/index.html s3://${bucket}/index.html \
+                        aws s3 cp dist/index.html s3://${bucket}/index.html \
                             --region ${AWS_REGION} \
                             --cache-control "no-cache, no-store, must-revalidate"
                     """
