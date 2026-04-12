@@ -12,7 +12,7 @@ pipeline {
             defaultValue: 'main',
             description: 'Branch to deploy from'
         )
-    }
+    )
 
     environment {
         DEV_S3_BUCKET   = 'railtick-user-dev'
@@ -20,6 +20,7 @@ pipeline {
         DEV_CF_DIST_ID  = 'ERKD8AQR15P18'
         PROD_CF_DIST_ID = 'E26U3FKRS5X9JA'
         AWS_REGION      = 'ap-south-1'
+        ENV_SECRETS_PATH = '/home/ubuntu/railtick-frontend-secrets/user-web'
     }
 
     stages {
@@ -29,6 +30,18 @@ pipeline {
                 git credentialsId: 'github-credentials',
                     url: 'https://github.com/mehulbansal2003/railway-user-web',
                     branch: "${params.BRANCH}"
+            }
+        }
+
+        stage('Inject Env File') {
+            steps {
+                script {
+                    if (params.ENVIRONMENT == 'prod') {
+                        sh "cp ${ENV_SECRETS_PATH}/.env.production .env.production"
+                    } else {
+                        sh "cp ${ENV_SECRETS_PATH}/.env.development .env.development"
+                    }
+                }
             }
         }
 
