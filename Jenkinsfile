@@ -37,9 +37,9 @@ pipeline {
                 script {
                     def secretsPath = '/home/ubuntu/railtick-frontend-secrets/user-web'
                     if (params.ENVIRONMENT == 'prod') {
-                        sh "cp ${ENV_SECRETS_PATH}/.env.production .env.production"
+                        sh "cp ${secretsPath}/.env.production .env.production"
                     } else {
-                        sh "cp ${ENV_SECRETS_PATH}/.env.development .env.development"
+                        sh "cp ${secretsPath}/.env.development .env.development"
                     }
                 }
             }
