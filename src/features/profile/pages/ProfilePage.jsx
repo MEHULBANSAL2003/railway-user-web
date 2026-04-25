@@ -8,6 +8,7 @@ import ProfileInfo from '../components/ProfileInfo'
 import EmailVerification from '../components/EmailVerification'
 import ChangePasswordForm from '../components/ChangePasswordForm'
 import DeactivateAccount from '../components/DeactivateAccount'
+import DeleteAccount from '../components/DeleteAccount'
 
 export default function ProfilePage() {
   const dispatch = useDispatch()
@@ -38,6 +39,7 @@ export default function ProfilePage() {
         <EmailVerification />
         <ChangePasswordForm />
         <DeactivateAccount />
+        <DeleteAccount />
       </div>
     </div>
   )

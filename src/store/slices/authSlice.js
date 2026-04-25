@@ -197,6 +197,21 @@ export const deactivateAccount = createAsyncThunk(
   }
 )
 
+export const deleteAccount = createAsyncThunk(
+  'auth/deleteAccount',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const { data } = await authService.deleteAccount(payload)
+      storage.clearAuth()
+      return data.data // { message, recoveryPeriodDays }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.reason || 'Failed to delete account.'
+      )
+    }
+  }
+)
+
 export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
@@ -382,6 +397,15 @@ const authSlice = createSlice({
     // Deactivate Account
     builder
       .addCase(deactivateAccount.fulfilled, (state) => {
+        state.user = null
+        state.accessToken = null
+        state.isAuthenticated = false
+        state.otpFlow = null
+      })
+
+    // Delete Account
+    builder
+      .addCase(deleteAccount.fulfilled, (state) => {
         state.user = null
         state.accessToken = null
         state.isAuthenticated = false

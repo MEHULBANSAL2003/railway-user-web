@@ -45,4 +45,7 @@ export const authService = {
 
   deactivate: (payload) =>
     authClient.post(USER_ENDPOINTS.DEACTIVATE, payload),
+
+  deleteAccount: (payload) =>
+    authClient.post(USER_ENDPOINTS.DELETE_ACCOUNT, payload),
 }

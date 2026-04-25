@@ -19,4 +19,5 @@ export const USER_ENDPOINTS = {
   EMAIL_VERIFY_OTP: '/users/email/verify-otp',
   EMAIL_RESEND_OTP: '/users/email/resend-otp',
   DEACTIVATE: '/users/deactivate',
+  DELETE_ACCOUNT: '/account/delete',
 }
